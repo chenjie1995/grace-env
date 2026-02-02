@@ -1,0 +1,35 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:17.10.1-ce.0
+    container_name: gitlab
+    restart: always
+    hostname: '127.0.0.1'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://127.0.0.1:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2424
+    ports:
+      - '8929:8929'
+      - '2424:22'
+    volumes:
+      - ./data/gitlab/config:/etc/gitlab:Z
+      - ./data/gitlab/logs:/var/log/gitlab:Z
+      - ./data/gitlab/data:/var/opt/gitlab:Z
+    deploy:
+      resources:
+        limits:
+          memory: 12288M
+  nexus:
+    image: sonatype/nexus3:3.78.2
+    container_name: nexus
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data/nexus/nexus-data:/nexus-data:Z
+    deploy:
+      resources:
+        limits:
+          memory: 6144M

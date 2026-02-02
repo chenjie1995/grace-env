@@ -1,0 +1,126 @@
+services:
+  mysql:
+    image: mysql:8.4.4
+    container_name: mysql
+    ports:
+      - 3306:3306
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=mysql@123456
+    command:
+      --max-connections=2048
+      --lower-case-table-names=1
+      --mysql-native-password=ON
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./conf/mysql/my.cnf:/etc/mysql/my.cnf
+      - /data/mysql/data:/var/lib/mysql
+      - /data/mysql/logs:/var/log/mysql
+      - /data/mysql/mysql-files:/var/lib/mysql-files
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL","mysql mysql --user root --password='mysql@123456' --silent --execute 'SELECT 1;' "]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 4096M
+
+  redis:
+    image: redis:7.4.2
+    container_name: redis
+    ports:
+      - 6379:6379
+    command:
+      redis-server /etc/redis/redis.conf --appendonly yes
+    volumes:
+      - ./conf/redis/redis.conf:/etc/redis/redis.conf
+      - /data/redis/data:/data
+    restart: always
+    sysctls:
+      - net.core.somaxconn=1024
+    deploy:
+      resources:
+        limits:
+          memory: 4096M
+
+  nacos:
+    image: nacos/nacos-server:v2.5.1
+    container_name: nacos
+    ports:
+      - 8848:8848
+      - 9848:9848
+      - 9849:9849
+    environment:
+      - PREFER_HOST_MODE=hostname
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - NACOS_AUTH_ENABLE=true
+      - NACOS_AUTH_IDENTITY_KEY=nacos
+      - NACOS_AUTH_IDENTITY_VALUE=nacos@123456
+      - NACOS_AUTH_TOKEN=b8wEEfAKwMp9HhUVeJBN0z3kX6QaFi4zYdG5SqRt7io=
+      - MYSQL_SERVICE_HOST=mysql
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_DB_NAME=nacos
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=mysql@123456
+      - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL","curl -sS http://localhost:8848 ||exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - mysql
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z-cpuv1
+    # image: minio/minio:RELEASE.2022-05-26T05-48-41Z
+    container_name: minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio@123456
+      MINIO_BROWSER_REDIRECT_URL: http://127.0.0.1:10000/minio/ui
+    volumes:
+      - /data/minio/data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL","curl -sS http://localhost:9000 ||exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  postgres:
+    images: postgres:18.1-alpine3.23
+    container_name: postgres
+    environment:
+      TZ: Asia/Shanghai
+      POSTGRES_PASSWORD: postgres@123456
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4096M

@@ -1,0 +1,3 @@
+# Ignore data directories under docker services
+/docker/infra/**/data/
+/docker/middleware/**/data/
