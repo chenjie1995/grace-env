@@ -110,7 +110,7 @@ services:
           memory: 1024M
 
   postgres:
-    images: postgres:18.1-alpine3.23
+    image: postgres:18.1-alpine3.23
     container_name: postgres
     environment:
       TZ: Asia/Shanghai
@@ -118,7 +118,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql
     restart: always
     deploy:
       resources:
